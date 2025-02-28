@@ -15,12 +15,6 @@ selected_stocks = st.sidebar.multiselect("Chọn cổ phiếu:", stock_options, 
 start_date = st.sidebar.date_input("Chọn ngày bắt đầu:", datetime.date(2010, 5, 31))
 end_date = st.sidebar.date_input("Chọn ngày kết thúc:", datetime.date(2025, 2, 28))
 
-st.write("### Các tùy chọn đã chọn:")
-st.write("Cổ phiếu:", selected_stocks)
-st.write("Ngày bắt đầu:", start_date)
-st.write("Ngày kết thúc:", end_date)
-
-
 # # ----------------------------------------------------------------
 # # GET DATA
 
