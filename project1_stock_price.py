@@ -1,38 +1,84 @@
-import yfinance as yf
+# ################################################################
+# ## VERSION 2
 import streamlit as st
-
+import yfinance as yf
 import datetime
-################################################################
-## VERSION 2
-import yfinance as yf
-import streamlit as st
+import pandas as pd
+import pandas as pd
+import plotly.graph_objects as go
 
-st.write("""
-# Simple Stock Price App
 
-Nhập ticker symbol và xem biểu đồ giá đóng cửa và khối lượng giao dịch.
-""")
+# Sidebar: nhập liệu
+st.sidebar.header("Tùy chọn nhập liệu")
+stock_options = ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'TSLA']
+selected_stocks = st.sidebar.multiselect("Chọn cổ phiếu:", stock_options, default=['AAPL', 'GOOGL', 'MSFT'])
+start_date = st.sidebar.date_input("Chọn ngày bắt đầu:", datetime.date(2010, 5, 31))
+end_date = st.sidebar.date_input("Chọn ngày kết thúc:", datetime.date(2025, 2, 28))
 
-# INPUT
+st.write("### Các tùy chọn đã chọn:")
+st.write("Cổ phiếu:", selected_stocks)
+st.write("Ngày bắt đầu:", start_date)
+st.write("Ngày kết thúc:", end_date)
 
-# Nhận ticker symbol từ người dùng, mặc định là 'GOOGL'
-tickerSymbol = st.text_input('Nhập ticker symbol:', 'GOOGL')
 
-start_date = st.date_input("Chọn ngày bắt đầu:", datetime.date(2010, 5, 31))
-end_date = st.date_input("Chọn ngày kết thúc:", datetime.date(2020, 5, 31))
+# # ----------------------------------------------------------------
+# # GET DATA
 
-# ----------------------------------------------------------------
+# Lấy dữ liệu giá đóng cửa cho các cổ phiếu đã chọn
+if selected_stocks:
+    data = yf.download(selected_stocks, start=start_date, end=end_date)['Close']
+else:
+    data = pd.DataFrame()
 
-# Lấy dữ liệu của ticker từ yfinance
-tickerData = yf.Ticker(tickerSymbol)
 
-# Lấy dữ liệu lịch sử từ ngày 31/05/2010 đến 31/05/2020
-tickerDf = tickerData.history(period='1d', start=start_date, end=end_date)
+# # ----------------------------------------------------------------
+# # SHOW DATA
+    
+# Tạo tabs: một cho biểu đồ, một cho bảng dữ liệu
+tab_chart, tab_table, tab_candle = st.tabs(["Chart", "Table Data", "Candlestick Chart"])
 
-# Hiển thị biểu đồ giá đóng cửa
-st.write(f"### Giá đóng cửa của {tickerSymbol}")
-st.line_chart(tickerDf.Close)
+with tab_chart:
+    st.write("### Biểu đồ giá đóng cửa")
+    st.line_chart(data)
 
-# Hiển thị biểu đồ khối lượng giao dịch
-st.write(f"### Khối lượng giao dịch của {tickerSymbol}")
-st.line_chart(tickerDf.Volume)
+with tab_table:
+    st.write("### Dữ liệu bảng")
+    st.dataframe(data)
+
+
+# Tab 3: Biểu đồ nến cho ticker riêng
+with tab_candle:
+    st.header("Biểu đồ nến")
+    # Nhập ticker cho biểu đồ nến (mặc định là AAPL)
+    candlestick_ticker = st.text_input("Nhập ticker cho biểu đồ nến:", "AAPL", key="candlestick_ticker")
+    
+    if candlestick_ticker:
+        data = yf.download(candlestick_ticker, start=start_date, end=end_date)
+
+        # Nếu chỉ có 1 ticker, ta gộp tên cột bằng cách lấy level 0
+        # Kết quả: "Open", "High", "Low", "Close", "Adj Close", "Volume"
+        # GỘP CỘT VÀ LÀM PHẲNG
+
+        data.columns = data.columns.droplevel(1)
+
+        # Tạo biểu đồ nến với Plotly
+        fig = go.Figure(
+            data=[go.Candlestick(
+                x=data.index,
+                open=data['Open'],
+                high=data['High'],
+                low=data['Low'],
+                close=data['Close'],
+                name=candlestick_ticker
+            )]
+        )
+
+        fig.update_layout(
+            title=f"Biểu đồ nến: {candlestick_ticker}",
+            xaxis_title="Ngày",
+            yaxis_title="Giá (USD)"
+        )
+
+        st.plotly_chart(fig)
+    else:
+        st.write("Không có dữ liệu cho ticker này.")
