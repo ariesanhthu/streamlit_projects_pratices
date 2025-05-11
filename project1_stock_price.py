@@ -52,7 +52,7 @@ with tab_candle:
         # Nếu chỉ có 1 ticker, ta gộp tên cột bằng cách lấy level 0
         # Kết quả: "Open", "High", "Low", "Close", "Adj Close", "Volume"
         # GỘP CỘT VÀ LÀM PHẲNG
-
+        # st.write(data)
         data.columns = data.columns.droplevel(1)
 
         # Tạo biểu đồ nến với Plotly
